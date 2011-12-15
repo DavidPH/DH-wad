@@ -354,6 +354,25 @@ void option::print_help(FILE *out, unsigned width)
 }
 
 //
+// option::print_vers
+//
+void option::print_version(FILE *out)
+{
+   if (help_program)
+   {
+      fputs(help_program, out);
+
+      if (help_version)
+      {
+         fputc(' ', out);
+         fputs(help_version, out);
+      }
+
+      fputc('\n', out);
+   }
+}
+
+//
 // option::process_option_arg
 //
 int option::process_option_arg(int argc, char const *const *argv, int optf)

@@ -48,7 +48,8 @@ option_help('h', "help", NULL, "Prints usage and exits.", NULL, handle_help);
 // option: -i, --iwad
 //
 static option::option_data<bool>
-option_iwad('i', "iwad", "output", "Generates an IWAD instead of a PWAD.", NULL);
+option_iwad('i', "iwad", "output", "Generates an IWAD instead of a PWAD.",
+NULL);
 
 //
 // option: -l, --list
@@ -69,6 +70,18 @@ option_output('o', "output", "output",
 static option::option_data<bool>
 option_unwad('u', "unwad", "output",
 "Outputs lumps into a directory instead of a WAD archive.", NULL);
+
+//
+// option: --version
+//
+static int handle_version(char const *, int, int, char const *const *)
+{
+   option::print_version(stderr);
+   exit(0);
+}
+static option::option_call
+option_version('\0', "version", NULL, "Prints version and exits.", NULL,
+handle_version);
 
 //
 // output_dir
@@ -275,6 +288,7 @@ static inline void output_wad()
 static inline int _main(int argc, char **argv)
 {
    option::help_program = "DH-wad";
+   option::help_version = "v1.0";
 
    option::help_usage = "[option]...\n[--output] OUTPUT\nSOURCE";
 

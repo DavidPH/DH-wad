@@ -74,6 +74,9 @@ public:
    /// Prints usage information.
    static void print_help(FILE *out, unsigned width = 0);
 
+   /// Prints version information.
+   static void print_version(FILE *out);
+
    static void process_options(int argc, char const *const *argv, int optf);
 
    /// Used to handle args not attached to options.
