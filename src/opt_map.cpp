@@ -29,16 +29,36 @@
 
 
 
-#define DO_MAP_LUMP(LN,REQ)         \
-Lump::write_name_file(fileend, LN); \
-if (is_file(filetmp))               \
-   Lump::create_file(LN, filetmp);  \
-else if (REQ)                       \
-   Lump::create_null(LN)
+#define DO_MAP_LUMP(NAME,REQ)                         \
+if (map_lump[ML_##NAME])                              \
+   Lump::create_file(LN_##NAME, map_lump[ML_##NAME]); \
+else if (REQ)                                         \
+   Lump::create_null(LN_##NAME)
+
+enum
+{
+   ML_HEADER,
+   ML_TEXTMAP,
+   ML_THINGS,
+   ML_LINEDEFS,
+   ML_SIDEDEFS,
+   ML_VERTEXES,
+   ML_SEGS,
+   ML_SSECTORS,
+   ML_NODES,
+   ML_SECTORS,
+   ML_REJECT,
+   ML_BLOCKMAP,
+   ML_BEHAVIOR,
+   ML_ENDMAP,
+   ML_NONE
+};
 
 static void iter_dir_map(char const *filename);
+static void iter_dir_ml(char const *filename);
 
 static LumpName current_map;
+static char *map_lump[ML_NONE] = {NULL};
 
 
 
@@ -78,41 +98,37 @@ option_map('m', "map", "input", "Adds a lump=mapdir pair.", NULL, handle_map);
 //
 void Lump::create_map(LumpName name, char const *dirname)
 {
-   size_t dirlen;
-   char *fileend;
-   char *filetmp;
-   bool textmap;
-
    current_map = name;
 
-   dirlen = strlen(dirname);
+   iter_dir(dirname, iter_dir_ml);
 
-   filetmp = new char[dirlen + 14];
-   fileend = filetmp+dirlen;
-   memcpy(filetmp, dirname, dirlen);
+   bool textmap = map_lump[ML_TEXTMAP];
 
-   if (fileend[-1] != PATH_SEP)
-      *fileend++ = PATH_SEP;
+   if (map_lump[ML_HEADER])
+      Lump::create_file(name, map_lump[ML_HEADER]);
+   else
+      Lump::create_null(name);
 
-   DO_MAP_LUMP(name, true);
-
-   Lump::write_name_file(fileend, LN_TEXTMAP);
-   if ((textmap = is_file(filetmp)) == true)
-      Lump::create_file(LN_TEXTMAP, filetmp);
-
-   DO_MAP_LUMP(LN_THINGS,   !textmap);
-   DO_MAP_LUMP(LN_LINEDEFS, !textmap);
-   DO_MAP_LUMP(LN_SIDEDEFS, !textmap);
-   DO_MAP_LUMP(LN_VERTEXES, !textmap);
-   DO_MAP_LUMP(LN_SEGS,     !textmap);
-   DO_MAP_LUMP(LN_SSECTORS, !textmap);
-   DO_MAP_LUMP(LN_NODES,    !textmap);
-   DO_MAP_LUMP(LN_SECTORS,  !textmap);
-   DO_MAP_LUMP(LN_REJECT,   !textmap);
-   DO_MAP_LUMP(LN_BLOCKMAP, !textmap);
-   DO_MAP_LUMP(LN_BEHAVIOR,  false  );
+   DO_MAP_LUMP(TEXTMAP,   textmap);
+   DO_MAP_LUMP(THINGS,   !textmap);
+   DO_MAP_LUMP(LINEDEFS, !textmap);
+   DO_MAP_LUMP(SIDEDEFS, !textmap);
+   DO_MAP_LUMP(VERTEXES, !textmap);
+   DO_MAP_LUMP(SEGS,     !textmap);
+   DO_MAP_LUMP(SSECTORS, !textmap);
+   DO_MAP_LUMP(NODES,    !textmap);
+   DO_MAP_LUMP(SECTORS,  !textmap);
+   DO_MAP_LUMP(REJECT,   !textmap);
+   DO_MAP_LUMP(BLOCKMAP, !textmap);
+   DO_MAP_LUMP(BEHAVIOR,  false  );
    if (textmap) iter_dir(dirname, iter_dir_map);
-   DO_MAP_LUMP(LN_ENDMAP,    textmap);
+   DO_MAP_LUMP(ENDMAP,    textmap);
+
+   for (int i = 0; i < ML_NONE; ++i)
+   {
+      delete[] map_lump[i];
+      map_lump[i] = NULL;
+   }
 }
 
 //
@@ -138,6 +154,49 @@ static void iter_dir_map(char const *filename)
    }
 
    Lump::create_file(name, filename);
+}
+
+//
+// iter_file_ml
+//
+// Searches for standard map lumps.
+//
+static void iter_dir_ml(char const *filename)
+{
+   if (is_dir(filename))
+   {
+      iter_dir(filename, iter_dir_ml);
+      return;
+   }
+
+   LumpName name = Lump::name_from_file(filename);
+
+   int index = -1;
+
+   if (name == current_map)
+      index = ML_HEADER;
+   else switch (name)
+   {
+   case LN_TEXTMAP:  index = ML_TEXTMAP;  break;
+   case LN_THINGS:   index = ML_THINGS;   break;
+   case LN_LINEDEFS: index = ML_LINEDEFS; break;
+   case LN_SIDEDEFS: index = ML_SIDEDEFS; break;
+   case LN_VERTEXES: index = ML_VERTEXES; break;
+   case LN_SEGS:     index = ML_SEGS;     break;
+   case LN_SSECTORS: index = ML_SSECTORS; break;
+   case LN_NODES:    index = ML_NODES;    break;
+   case LN_SECTORS:  index = ML_SECTORS;  break;
+   case LN_REJECT:   index = ML_REJECT;   break;
+   case LN_BLOCKMAP: index = ML_BLOCKMAP; break;
+   case LN_BEHAVIOR: index = ML_BEHAVIOR; break;
+   case LN_ENDMAP:   index = ML_ENDMAP;   break;
+   }
+
+   if (index == -1) return;
+
+   size_t len = strlen(filename)+1;
+   map_lump[index] = new char[len];
+   memcpy(map_lump[index], filename, len);
 }
 
 
