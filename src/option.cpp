@@ -250,10 +250,15 @@ void option::print_help(FILE *out, unsigned width)
          fputs("usage: ", out);
          fputs(help_program, out);
          fputc(' ', out);
-         fputs(help_usage, out);
-         fputc('\n', out);
+         write_wrapped(out, width, help_usage, 7, help_program);
       }
 
+      fputc('\n', out);
+   }
+
+   if (help_desc_s)
+   {
+      write_wrapped(out, width, help_desc_s, 0);
       fputc('\n', out);
    }
 
@@ -266,7 +271,7 @@ void option::print_help(FILE *out, unsigned width)
 
    while ((opt = opt->next) != end)
    {
-      size_t baselen, linelen;
+      size_t baselen;
 
       char const *desc = opt->descS;
 
@@ -344,34 +349,7 @@ void option::print_help(FILE *out, unsigned width)
          continue;
       }
 
-      linelen = baselen;
-
-      while (*desc)
-      {
-         // Linewrapping.
-         if (*desc == '\n' || linelen+wordlen(desc) > width)
-         {
-            if (*desc == '\n') desc++;
-
-            fputc('\n', out);
-            linelen = 0;
-
-            // Use common indenting.
-            while (linelen < baselen)
-            {
-               fputc(' ', out);
-               linelen++;
-            }
-
-            // Skip any leading spaces.
-            while (*desc == ' ') desc++;
-         }
-
-         fputc(*desc++, out);
-         linelen++;
-      }
-
-      fputc('\n', out);
+      write_wrapped(out, width, desc, baselen);
    }
 }
 
@@ -575,6 +553,62 @@ size_t option::wordlen(char const *str)
       len++;
 
    return len ? len : 1;
+}
+
+//
+// option::write_wrapped
+//
+void option::write_wrapped(FILE *out, size_t width, char const *str,
+                           size_t baselen, char const *prefix)
+{
+   char const *pre;
+   size_t linelen = baselen;
+
+   if (prefix)
+      linelen += strlen(prefix)+1;
+
+   while (*str)
+   {
+      // Linewrapping.
+      if (*str == '\n' || linelen+wordlen(str) > width)
+      {
+         fputc('\n', out);
+
+         // Only write line start stuff for the last linefeed.
+         if (*str == '\n' && str[1] == '\n')
+         {
+            str++;
+            continue;
+         }
+
+         for (linelen = 0; linelen < baselen; ++linelen)
+            fputc(' ', out);
+
+         if (prefix)
+         {
+            // Only reprint prefix for an explicit line break.
+            if (*str == '\n')
+               for (pre = prefix; *pre; ++pre, ++linelen)
+                  fputc(*pre, out);
+            else
+               for (pre = prefix; *pre; ++pre, ++linelen)
+                  fputc(' ', out);
+
+            fputc(' ', out);
+            linelen++;
+         }
+
+         if (*str == '\n') str++;
+
+         // Skip any leading spaces.
+         while (*str == ' ') str++;
+      }
+
+      fputc(*str++, out);
+      linelen++;
+   }
+
+   fputc('\n', out);
 }
 
 //=============================================================================

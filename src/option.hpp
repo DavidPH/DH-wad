@@ -129,6 +129,9 @@ private:
 
    static size_t wordlen(char const *str);
 
+   static void write_wrapped(FILE *out, size_t width, char const *str,
+                             size_t baselen, char const *prefix = NULL);
+
    static option *head();
 };
 

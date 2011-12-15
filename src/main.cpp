@@ -276,6 +276,17 @@ static inline int _main(int argc, char **argv)
 {
    option::help_program = "DH-wad";
 
+   option::help_usage = "[option]...\n[--output] OUTPUT\nSOURCE";
+
+   option::help_desc_s = "If no output specified, defaults to using the last"
+                        " loose arg. (If still none, no output is done.) All"
+                        " remaining loose args are loaded as -d after all"
+                        " options.\n\n"
+                         "Inputs are added in the order specified on the"
+                        " command line. Generally, the lump name may be omitted"
+                        " from pairs (along with the '=') and it will be"
+                        " guessed based on the filename.";
+
    // If no args, just print help and exit.
    if (argc <= 1)
    {
