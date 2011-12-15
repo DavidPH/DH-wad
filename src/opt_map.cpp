@@ -29,11 +29,15 @@
 
 
 
-#define DO_MAP_LUMP(NAME,REQ)                         \
-if (map_lump[ML_##NAME])                              \
-   Lump::create_file(LN_##NAME, map_lump[ML_##NAME]); \
-else if (REQ)                                         \
-   Lump::create_null(LN_##NAME)
+#define DO_MAP_LUMP(NAME,REQ)                   \
+if (map_lump[ML_##NAME])                        \
+{                                               \
+   create_file(LN_##NAME, map_lump[ML_##NAME]); \
+   delete[] map_lump[ML_##NAME];                \
+   map_lump[ML_##NAME] = NULL;                  \
+}                                               \
+else if (REQ)                                   \
+   create_null(LN_##NAME)
 
 enum
 {
@@ -123,12 +127,6 @@ void Lump::create_map(LumpName name, char const *dirname)
    DO_MAP_LUMP(BEHAVIOR,  false  );
    if (textmap) iter_dir(dirname, iter_dir_map);
    DO_MAP_LUMP(ENDMAP,    textmap);
-
-   for (int i = 0; i < ML_NONE; ++i)
-   {
-      delete[] map_lump[i];
-      map_lump[i] = NULL;
-   }
 }
 
 //

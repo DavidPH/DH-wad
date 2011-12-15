@@ -30,12 +30,32 @@
 
 
 
+#define DO_HEAD_LUMP(HL,LN)                     \
+if (head_lump[HL])                              \
+{                                               \
+   create_file(current_name|LN, head_lump[HL]); \
+   delete[] head_lump[HL];                      \
+   head_lump[HL] = NULL;                        \
+}                                               \
+else                                            \
+   create_null(current_name|LN)
+
+enum
+{
+   HL_START,
+   HL_END,
+   HL_NONE
+};
+
 static void iter_dir_maps(char const *filename);
 static void iter_dir_spec(char const *filename);
 static void iter_dir_x(char const *filename);
+static void iter_dir_x_head(char const *filename);
 static void iter_dir_xx(char const *filename);
+static void iter_dir_xx_head(char const *filename);
 
 static LumpName current_name;
+static char *head_lump[HL_NONE] = {NULL};
 
 
 
@@ -86,9 +106,11 @@ void Lump::create_special(LumpName name, char const *dirname)
    {
       current_name = name & LNM_X;
 
-      create_null(name);
+      iter_dir(dirname, iter_dir_x_head);
+      DO_HEAD_LUMP(HL_START, LN_X_START);
       iter_dir(dirname, iter_dir_x);
-      create_null(current_name | LN_X_END);
+      DO_HEAD_LUMP(HL_END,   LN_X_END);
+
       return;
    }
 
@@ -96,9 +118,11 @@ void Lump::create_special(LumpName name, char const *dirname)
    {
       current_name = name & LNM_XX;
 
-      create_null(name);
+      iter_dir(dirname, iter_dir_xx_head);
+      DO_HEAD_LUMP(HL_START, LN_XX_START);
       iter_dir(dirname, iter_dir_xx);
-      create_null(current_name | LN_XX_END);
+      DO_HEAD_LUMP(HL_END,   LN_XX_END);
+
       return;
    }
 
@@ -154,6 +178,38 @@ static void iter_dir_x(char const *filename)
 }
 
 //
+// iter_dir_x_head
+//
+// Searches recursively for the tags for current_name.
+//
+static void iter_dir_x_head(char const *filename)
+{
+   if (is_dir(filename))
+   {
+      iter_dir(filename, iter_dir_x_head);
+      return;
+   }
+
+   LumpName name = Lump::name_from_file(filename);
+
+   int index = -1;
+
+   if ((name & LNM_X) == current_name)
+   {
+      if ((name & LNM_X_START) == LN_X_START)
+         index = HL_START;
+      else if ((name & LNM_X_END) == LN_X_END)
+         index = HL_END;
+   }
+
+   if (index == -1) return;
+
+   size_t len = strlen(filename)+1;
+   head_lump[index] = new char[len];
+   memcpy(head_lump[index], filename, len);
+}
+
+//
 // iter_dir_xx
 //
 // Adds every file recursively, unless the tags for current_name.
@@ -176,6 +232,38 @@ static void iter_dir_xx(char const *filename)
    }
 
    Lump::create_file(name, filename);
+}
+
+//
+// iter_dir_xx_head
+//
+// Searches recursively for the tags for current_name.
+//
+static void iter_dir_xx_head(char const *filename)
+{
+   if (is_dir(filename))
+   {
+      iter_dir(filename, iter_dir_xx_head);
+      return;
+   }
+
+   LumpName name = Lump::name_from_file(filename);
+
+   int index = -1;
+
+   if ((name & LNM_XX) == current_name)
+   {
+      if ((name & LNM_XX_START) == LN_XX_START)
+         index = HL_START;
+      else if ((name & LNM_XX_END) == LN_XX_END)
+         index = HL_END;
+   }
+
+   if (index == -1) return;
+
+   size_t len = strlen(filename)+1;
+   head_lump[index] = new char[len];
+   memcpy(head_lump[index], filename, len);
 }
 
 
