@@ -7,10 +7,12 @@ add_executable(DH-wad
    LumpData.cpp
    LumpFile.cpp
    LumpNull.cpp
+   LumpWad.cpp
    opt_dir.cpp
    opt_map.cpp
    opt_spec.cpp
    opt_wad.cpp
    option.cpp
+   Wad.cpp
 )
 

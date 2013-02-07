@@ -1,17 +1,17 @@
 //-----------------------------------------------------------------------------
 //
-// Copyright(C) 2011 David Hill
+// Copyright(C) 2011, 2013 David Hill
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
@@ -28,13 +28,6 @@
 #include <cstring>
 
 
-
-size_t Lump::count = 0;
-
-Lump *Lump::head = NULL;
-Lump *Lump::end  = NULL;
-Lump *Lump::tail = NULL;
-
 bool Lump::trans_bslash = false;
 
 //
@@ -50,29 +43,6 @@ option_trans_bslash('b', "translate-backslash", "translation",
 //
 Lump::Lump(LumpName _name) : name(_name), next(NULL), offset(0)
 {
-   if (!head)
-      head = this;
-
-   if (tail)
-      tail->next = this;
-
-   tail = this;
-
-   count++;
-}
-
-//
-// Lump::calculate_offsets
-//
-void Lump::calculate_offsets()
-{
-   size_t offset = (count + 1) * 16;
-
-   for (Lump *it = head; it != end; it = it->next)
-   {
-      it->offset = offset;
-      offset += it->size();
-   }
 }
 
 //

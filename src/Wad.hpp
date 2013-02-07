@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 //
-// Copyright(C) 2011, 2013 David Hill
+// Copyright(C) 2013 David Hill
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,42 +17,47 @@
 //
 //-----------------------------------------------------------------------------
 //
-// I/O Abstraction
+// Wad Handling
 //
 //-----------------------------------------------------------------------------
 
-#ifndef HPP_io_
-#define HPP_io_
+#ifndef HPP_Wad_
+#define HPP_Wad_
 
-
-//----------------------------------------------------------------------------|
-// Macros                                                                     |
-//
-
-#ifdef TARGET_OS_WIN32
-#define PATH_SEP '\\'
-#else
-#define PATH_SEP '/'
-#endif
+#include <cstdio>
 
 
 //----------------------------------------------------------------------------|
 // Types                                                                      |
 //
 
-typedef void (*FileHandler)(char const *filename, void *data);
+class Lump;
 
-
-//----------------------------------------------------------------------------|
-// Global Functions                                                           |
 //
+// Wad
+//
+class Wad
+{
+public:
+   Wad();
 
-bool is_dir(char const *dirname);
-bool is_file(char const *filename);
+   void insert(Lump *lump);
 
-void IterateDir(char const *dirname, FileHandler handler, void *data);
+   std::size_t sizeWad();
 
-void make_dir(char const *dirname);
+   void writeList(std::FILE *out);
+   void writeWad(std::FILE *out);
 
-#endif//HPP_io_
+   std::size_t count, size;
+
+   Lump *head, *tail;
+
+
+   static Wad RootWad;
+
+private:
+   void calculateOffsets();
+};
+
+#endif//HPP_Wad_
 

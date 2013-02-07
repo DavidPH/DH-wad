@@ -1,17 +1,17 @@
 //-----------------------------------------------------------------------------
 //
-// Copyright(C) 2011 David Hill
+// Copyright(C) 2011, 2013 David Hill
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
@@ -27,6 +27,11 @@
 #include <cstdio>
 
 
+//----------------------------------------------------------------------------|
+// Types                                                                      |
+//
+
+class Wad;
 
 typedef unsigned long long int LumpName;
 
@@ -59,6 +64,9 @@ enum
    LNM_XX_START = 0x0000FFFFFFFFFFFF,
 };
 
+//
+// Lump
+//
 class Lump
 {
 public:
@@ -73,25 +81,26 @@ public:
 
    Lump *next;
 
+   size_t offset;
 
-   static void calculate_offsets();
 
-   static void create_data(LumpName name, char const *data, size_t len);
-   static void create_data_keep(LumpName name, char const *data, size_t len);
+   static void CreateData(Wad *wad, LumpName name, char const *data, size_t len);
+   static void CreateDataKeep(Wad *wad, LumpName name, char const *data, size_t len);
 
-   static void create_directory(char const *dirname);
+   static void CreateDirectory(Wad *wad, char const *dirname);
 
-   static void create_file(LumpName name, char const *filename);
-   static void create_file(LumpName name, char const *filename, size_t len);
-   static void create_file_keep(LumpName name, char const *filename);
+   static void CreateFile(Wad *wad, LumpName name, char const *filename);
+   static void CreateFile(Wad *wad, LumpName name, char const *filename, size_t len);
+   static void CreateFileKeep(Wad *wad, LumpName name, char const *filename);
 
-   static void create_map(LumpName name, char const *dirname);
+   static void CreateMap(Wad *wad, LumpName name, char const *dirname);
 
-   static void create_null(LumpName name);
+   static void CreateNull(Wad *wad, LumpName name);
 
-   static void create_special(LumpName name, char const *dirname);
+   static void CreateSpecial(Wad *wad, LumpName name, char const *dirname);
 
-   static void create_wad(char const *filename);
+   static void CreateWad(Wad *wad, LumpName name, Wad *subwad);
+   static void CreateWad(Wad *wad, char const *filename);
 
    static LumpName name_from_file(char const *filename);
    static LumpName name_from_string(char const *s);
@@ -105,11 +114,6 @@ public:
    static void write_name(FILE *out, LumpName name);
    static void write_name_file(char *out, LumpName name);
 
-   static size_t count;
-
-   static Lump *head;
-   static Lump *end;
-
    static bool trans_bslash;
 
 protected:
@@ -117,11 +121,6 @@ protected:
 
 private:
    Lump(Lump const &);
-
-   size_t offset;
-
-
-   static Lump *tail;
 };
 
 

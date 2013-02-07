@@ -17,13 +17,12 @@
 //
 //-----------------------------------------------------------------------------
 //
-// Lump Handling: --null
+// Lump Handling: -r, --recurse
 //
 //-----------------------------------------------------------------------------
 
 #include "Lump.hpp"
 
-#include "option.hpp"
 #include "Wad.hpp"
 
 
@@ -32,37 +31,19 @@
 //
 
 //
-// LumpNull
+// LumpWad
 //
-class LumpNull : public Lump
+class LumpWad : public Lump
 {
 public:
-   LumpNull(LumpName _name) : Lump(_name) {}
+   LumpWad(LumpName _name, Wad *_wad) : Lump(_name), wad(_wad) {}
 
-   virtual size_t size() {return 0;}
+   virtual std::size_t size() {return wad->sizeWad();}
 
-   virtual void writeData(FILE *) {}
+   virtual void writeData(std::FILE *out) {wad->writeWad(out);}
+
+   Wad *wad;
 };
-
-
-//----------------------------------------------------------------------------|
-// Options                                                                    |
-//
-
-//
-// option: -n, --null
-//
-static int HandleNull(char const *opt, int optf, int argc,
-                       char const *const *argv)
-{
-   if(!argc) option::exception::error(opt, optf, "requires argument");
-
-   Lump::CreateNull(&Wad::RootWad, Lump::name_from_string(argv[0]));
-
-   return 1;
-}
-static option::option_call OptionNull('n', "null", "input",
-  "Adds an empty lump.", NULL, HandleNull);
 
 
 //----------------------------------------------------------------------------|
@@ -70,11 +51,11 @@ static option::option_call OptionNull('n', "null", "input",
 //
 
 //
-// Lump::CreateNull
+// Lump::CreateWad
 //
-void Lump::CreateNull(Wad *wad, LumpName name)
+void Lump::CreateWad(Wad *wad, LumpName name, Wad *subwad)
 {
-   wad->insert(new LumpNull(name));
+   wad->insert(new LumpWad(name, subwad));
 }
 
 // EOF

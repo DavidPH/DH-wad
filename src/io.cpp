@@ -1,17 +1,17 @@
 //-----------------------------------------------------------------------------
 //
-// Copyright(C) 2011 David Hill
+// Copyright(C) 2011, 2013 David Hill
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
@@ -42,7 +42,13 @@
 #include <cstring>
 
 
+//----------------------------------------------------------------------------|
+// Global Functions                                                           |
+//
 
+//
+// is_dir
+//
 bool is_dir(char const * dirname)
 {
 	struct stat stat_data;
@@ -54,6 +60,9 @@ bool is_dir(char const * dirname)
 	return (stat_data.st_mode & S_IFMT) == S_IFDIR;
 }
 
+//
+// is_file
+//
 bool is_file(char const * filename)
 {
 	struct stat stat_data;
@@ -65,7 +74,10 @@ bool is_file(char const * filename)
 	return (stat_data.st_mode & S_IFMT) == S_IFREG;
 }
 
-void iter_dir(char const *dirname, FileHandler handler)
+//
+// IterateDir
+//
+void IterateDir(char const *dirname, FileHandler handler, void *data)
 {
    char *fileend;
    char *filetmp;
@@ -106,7 +118,7 @@ void iter_dir(char const *dirname, FileHandler handler)
       }
 
       strcpy(fileend, diritr.cFileName);
-      handler(filetmp);
+      handler(filetmp, data);
    }
    while (FindNextFile(dir, &diritr));
 
@@ -152,7 +164,7 @@ void iter_dir(char const *dirname, FileHandler handler)
       }
 
       strcpy(fileend, diritr.d_name);
-      handler(filetmp);
+      handler(filetmp, data);
    }
 
    delete[] filetmp;
@@ -160,6 +172,9 @@ void iter_dir(char const *dirname, FileHandler handler)
    #endif
 }
 
+//
+// make_dir
+//
 void make_dir(char const *dirname)
 {
    #ifdef TARGET_OS_WIN32
@@ -168,8 +183,6 @@ void make_dir(char const *dirname)
    mkdir(dirname, S_IRWXU);
    #endif
 }
-
-
 
 // EOF
 

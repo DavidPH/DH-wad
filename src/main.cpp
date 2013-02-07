@@ -1,17 +1,17 @@
 //-----------------------------------------------------------------------------
 //
-// Copyright(C) 2011 David Hill
+// Copyright(C) 2011, 2013 David Hill
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
@@ -25,6 +25,7 @@
 #include "io.hpp"
 #include "Lump.hpp"
 #include "option.hpp"
+#include "Wad.hpp"
 
 #include <cstdlib>
 #include <cstring>
@@ -43,13 +44,6 @@ static int handle_help(char const *, int, int, char const *const *)
 }
 static option::option_call
 option_help('h', "help", NULL, "Prints usage and exits.", NULL, handle_help);
-
-//
-// option: -i, --iwad
-//
-static option::option_data<bool>
-option_iwad('i', "iwad", "output", "Generates an IWAD instead of a PWAD.",
-NULL);
 
 //
 // option: -l, --list
@@ -115,7 +109,7 @@ static inline void output_dir()
    *dirext = '\0';
    make_dir(dirtmp);
 
-   for (Lump *it = Lump::head; it != Lump::end; it = it->next)
+   for(Lump *it = Wad::RootWad.head; it; it = it->next)
    {
       switch (mode)
       {
@@ -145,7 +139,7 @@ static inline void output_dir()
             it->writeNameFile(dirext);
             dirext += 8;
          }
-         else if (it->next != Lump::end && it->next->name == LN_THINGS)
+         else if (it->next && it->next->name == LN_THINGS)
          {
             mode = MODE_BM;
 
@@ -160,7 +154,7 @@ static inline void output_dir()
             it->writeNameFile(dirext);
             while (*dirext) dirext++;
          }
-         else if (it->next != Lump::end && it->next->name == LN_TEXTMAP)
+         else if (it->next && it->next->name == LN_TEXTMAP)
          {
             mode = MODE_TM;
 
@@ -249,11 +243,7 @@ static inline void output_dir()
 //
 static inline void output_list()
 {
-   for (Lump *it = Lump::head; it != Lump::end; it = it->next)
-   {
-      it->writeNameString(stdout);
-      fputc('\n', stdout);
-   }
+   Wad::RootWad.writeList(stdout);
 }
 
 //
@@ -266,18 +256,7 @@ static inline void output_wad()
    if (!wad)
       Exception::error("unable to fopen '%s'", option_output.data);
 
-   Lump::calculate_offsets();
-
-   fputs(option_iwad.data ? "IWAD" : "PWAD", wad);
-   Lump::write_32(wad, Lump::count);
-   Lump::write_32(wad, 16);
-   Lump::write_32(wad, 0);
-
-   for (Lump *it = Lump::head; it != Lump::end; it = it->next)
-      it->writeHead(wad);
-
-   for (Lump *it = Lump::head; it != Lump::end; it = it->next)
-      it->writeData(wad);
+   Wad::RootWad.writeWad(wad);
 
    fclose(wad);
 }
@@ -317,10 +296,10 @@ static inline int _main(int argc, char **argv)
 
    // Any remaining loose args are now -d.
    for (size_t i = 0; i < option_args::arg_count; ++i)
-      Lump::create_directory(option_args::arg_vector[i]);
+      Lump::CreateDirectory(&Wad::RootWad, option_args::arg_vector[i]);
 
    // If no lumps, use output as a base for source.
-   if (!Lump::count && option_output.data)
+   if(!Wad::RootWad.count && option_output.data)
    {
       char const *out = option_output.data;
       size_t len = strlen(out);
@@ -339,12 +318,12 @@ static inline int _main(int argc, char **argv)
 
          if (option_unwad.data)
          {
-            Lump::create_wad(out);
+            Lump::CreateWad(&Wad::RootWad, out);
             option_output.data = tmp;
          }
          else
          {
-            Lump::create_special(Lump::name_from_file(tmp), tmp);
+            Lump::CreateSpecial(&Wad::RootWad, Lump::name_from_file(tmp), tmp);
             delete[] tmp;
          }
       }
@@ -354,12 +333,12 @@ static inline int _main(int argc, char **argv)
 
          if (option_unwad.data)
          {
-            Lump::create_wad(tmp);
+            Lump::CreateWad(&Wad::RootWad, tmp);
             delete[] tmp;
          }
          else
          {
-            Lump::create_special(Lump::name_from_file(out), out);
+            Lump::CreateSpecial(&Wad::RootWad, Lump::name_from_file(out), out);
             option_output.data = tmp;
          }
       }

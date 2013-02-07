@@ -1,17 +1,17 @@
 //-----------------------------------------------------------------------------
 //
-// Copyright(C) 2011 David Hill
+// Copyright(C) 2011, 2013 David Hill
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
@@ -21,9 +21,11 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "Except.hpp"
 #include "Lump.hpp"
+
+#include "Except.hpp"
 #include "option.hpp"
+#include "Wad.hpp"
 
 #include <cstring>
 
@@ -34,34 +36,42 @@
 #endif
 
 
+//----------------------------------------------------------------------------|
+// Types                                                                      |
+//
 
+//
+// LumpFile
+//
 class LumpFile : public Lump
 {
 public:
-   LumpFile(LumpName name, char const *filename);
+   LumpFile(LumpName _name, char const *_filename) : Lump(_name), filename(_filename) {}
 
-   virtual size_t size();
+   virtual std::size_t size();
 
-   virtual void writeData(FILE *out);
+   virtual void writeData(std::FILE *out);
 
 private:
    char const *filename;
 };
 
 
+//----------------------------------------------------------------------------|
+// Options                                                                    |
+//
 
 //
 // option: -f, --file
 //
-static int handle_file(char const *opt, int optf, int argc,
-                       char const *const *argv)
+static int HandleFile(char const *opt, int optf, int argc, char const *const *argv)
 {
-   if (!argc) option::exception::error(opt, optf, "requires argument");
+   if(!argc) option::exception::error(opt, optf, "requires argument");
 
    char const *filename = strchr(argv[0], '=');
    LumpName name;
 
-   if (filename)
+   if(filename)
       name = Lump::name_from_string(argv[0], filename++);
    else
    {
@@ -69,78 +79,75 @@ static int handle_file(char const *opt, int optf, int argc,
       name = Lump::name_from_file(filename);
    }
 
-   if (!*filename)
-      Lump::create_null(name);
-   else if (optf & option::OPTF_KEEPA)
-      Lump::create_file_keep(name, filename);
+   if(!*filename)
+      Lump::CreateNull(&Wad::RootWad, name);
+   else if(optf & option::OPTF_KEEPA)
+      Lump::CreateFileKeep(&Wad::RootWad, name, filename);
    else
-      Lump::create_file(name, filename);
+      Lump::CreateFile(&Wad::RootWad, name, filename);
 
    return 1;
 }
-static option::option_call
-option_file('f', "file", "input", "Adds a lump=file pair.", NULL, handle_file);
+static option::option_call OptionFile('f', "file", "input",
+   "Adds a lump=file pair.", NULL, HandleFile);
+
+
+//----------------------------------------------------------------------------|
+// Global Functions                                                           |
+//
 
 //
-// Lump::create_file
+// Lump::CreateFile
 //
-void Lump::create_file(LumpName name, char const *filename)
+void Lump::CreateFile(Wad *wad, LumpName name, char const *filename)
 {
-   create_file(name, filename, strlen(filename));
+   std::size_t len = std::strlen(filename) + 1;
+   CreateFileKeep(wad, name, static_cast<char *>(memcpy(new char[len], filename, len)));
 }
 
 //
-// Lump::create_file
+// Lump::CreateFile
 //
-void Lump::create_file(LumpName name, char const *filename, size_t len)
+void Lump::CreateFile(Wad *wad, LumpName name, char const *filename, size_t len)
 {
-   char *str = new char[len+1];
-   memcpy(str, &filename[0], len);
-   str[len] = '\0';
-   new LumpFile(name, str);
+   char *str = new char[len + 1];
+   memcpy(str, filename, len); str[len] = '\0';
+   CreateFileKeep(wad, name, str);
 }
 
 //
-// Lump::create_file_keep
+// Lump::CreateFileKeep
 //
-void Lump::create_file_keep(LumpName name, char const *filename)
+void Lump::CreateFileKeep(Wad *wad, LumpName name, char const *filename)
 {
-   new LumpFile(name, filename);
-}
-
-//
-// LumpFile::LumpFile
-//
-LumpFile::LumpFile(LumpName _name, char const *_filename)
-                   : Lump(_name), filename(_filename)
-{
+   wad->insert(new LumpFile(name, filename));
 }
 
 //
 // LumpFile::size
 //
-size_t LumpFile::size()
+std::size_t LumpFile::size()
 {
    #ifdef TARGET_OS_POSIX
    struct stat s;
 
-   if (stat(filename, &s))
+   if(stat(filename, &s))
       Exception::error("unable to stat '%s'", filename);
 
    return s.st_size;
    #else
-   FILE *file = fopen(filename, "rb");
-   if (!file) Exception::error("unable to fopen '%s'", filename);
+   std::FILE *file = std::fopen(filename, "rb");
+   if(!file) Exception::error("unable to fopen '%s'", filename);
 
-   if (fseek(file, 0, SEEK_END))
+   if(std::fseek(file, 0, SEEK_END))
       Exception::error("unable to fseek '%s'", filename);
 
-   long pos = ftell(file);
+   long pos = std::ftell(file);
 
-   if (pos == -1L)
+   if(pos < 0)
       Exception::error("unable to ftell '%s'", filename);
 
-   return static_cast<size_t>(pos);
+   return static_cast<std::size_t>(pos);
    #endif
 }
 
@@ -150,14 +157,12 @@ size_t LumpFile::size()
 void LumpFile::writeData(FILE *out)
 {
    int buf;
-   FILE *file = fopen(filename, "rb");
-   if (!file) Exception::error("unable to fopen '%s'", filename);
+   std::FILE *file = fopen(filename, "rb");
+   if(!file) Exception::error("unable to fopen '%s'", filename);
 
-   while ((buf = getc(file)) != EOF)
-      fputc(buf, out);
+   while((buf = std::fgetc(file)) != EOF)
+      std::fputc(buf, out);
 }
-
-
 
 // EOF
 
