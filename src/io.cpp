@@ -26,6 +26,7 @@
 #include "Except.hpp"
 
 #ifdef TARGET_OS_WIN32
+#define CINTERFACE
 #include <windows.h>
 #include <sys/stat.h>
 
