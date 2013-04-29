@@ -267,7 +267,7 @@ static inline void output_wad()
 static inline int _main(int argc, char **argv)
 {
    option::help_program = "DH-wad";
-   option::help_version = "v2.0";
+   option::help_version = "v2.0.0";
 
    option::help_usage = "[option]...\n[--output] OUTPUT\nSOURCE";
 
