@@ -113,6 +113,7 @@ static inline void output_dir()
    {
       switch (mode)
       {
+      case_MODE_NORM:
       case MODE_NORM:
          if ((it->name & LNM_X_START) == LN_X_START)
          {
@@ -211,7 +212,7 @@ static inline void output_dir()
          {
             mode = MODE_NORM;
             dirext = dirend;
-            break;
+            goto case_MODE_NORM;
          }
          break;
 
