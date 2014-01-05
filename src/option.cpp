@@ -644,7 +644,7 @@ option::exception::exception() : whatmsg(NULL), whatlen(0)
 //
 // exception::exception
 //
-option::exception::exception(exception const &e)
+option::exception::exception(exception const &e) : std::exception(e)
 {
    whatlen = e.whatlen;
    whatmsg = new char[whatlen];
@@ -868,7 +868,7 @@ template<typename T>
 option::option_data<T>
 ::option_data(char _nameS, char const *_nameL, char const *_group,
               char const *_descS, char const *_descL)
-              : option_dptr<T>(_nameS, _nameL, _group, _descS, _descL, &data),
+              : option_dptr(_nameS, _nameL, _group, _descS, _descL, &data),
                 data(0)
 {
 }
@@ -896,7 +896,7 @@ template<typename T>
 option::option_data<T>
 ::option_data(char _nameS, char const *_nameL, char const *_group,
               char const *_descS, char const *_descL, T const &value)
-              : option_dptr<T>(_nameS, _nameL, _group, _descS, _descL, &data),
+              : option_dptr(_nameS, _nameL, _group, _descS, _descL, &data),
                 data(value)
 {
 }

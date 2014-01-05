@@ -1,4 +1,8 @@
+file(GLOB HEADER_FILES *.hpp)
+
 add_executable(DH-wad
+   ${HEADER_FILES}
+
    main.cpp
 
    Except.cpp
