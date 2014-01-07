@@ -36,6 +36,9 @@
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
+#ifdef __APPLE__
+#include <sys/syslimits.h>
+#endif
 #include <dirent.h>
 #endif
 

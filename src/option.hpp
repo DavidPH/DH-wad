@@ -250,6 +250,8 @@ protected:
 **/
 template<typename T> class option::option_data : public option_dptr<T>
 {
+	typedef option_dptr<T> option_dptr;
+
 public:
    option_data(char nameS, char const *nameL, char const *group,
                char const *descS, char const *descL);
