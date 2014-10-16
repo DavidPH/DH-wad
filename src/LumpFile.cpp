@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 //
-// Copyright(C) 2011, 2013 David Hill
+// Copyright(C) 2011, 2013-2014 David Hill
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -29,10 +29,16 @@
 
 #include <cstring>
 
-#ifdef TARGET_OS_POSIX
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
+
+#ifdef TARGET_OS_POSIX
+#include <sys/types.h>
+#endif
+
+#ifndef _WIN32
+#include <fcntl.h>
+#include <sys/mman.h>
 #endif
 
 
@@ -128,27 +134,12 @@ void Lump::CreateFileKeep(Wad *wad, LumpName name, char const *filename)
 //
 std::size_t LumpFile::size()
 {
-   #ifdef TARGET_OS_POSIX
    struct stat s;
 
    if(stat(filename, &s))
       Exception::error("unable to stat '%s'", filename);
 
    return s.st_size;
-   #else
-   std::FILE *file = std::fopen(filename, "rb");
-   if(!file) Exception::error("unable to fopen '%s'", filename);
-
-   if(std::fseek(file, 0, SEEK_END))
-      Exception::error("unable to fseek '%s'", filename);
-
-   long pos = std::ftell(file);
-
-   if(pos < 0)
-      Exception::error("unable to ftell '%s'", filename);
-
-   return static_cast<std::size_t>(pos);
-   #endif
 }
 
 //
@@ -162,6 +153,8 @@ void LumpFile::writeData(FILE *out)
 
    while((buf = std::fgetc(file)) != EOF)
       std::fputc(buf, out);
+
+   std::fclose(file);
 }
 
 // EOF
