@@ -30,7 +30,6 @@
 #include <cstring>
 
 #include <sys/stat.h>
-#include <unistd.h>
 
 #ifdef TARGET_OS_POSIX
 #include <sys/types.h>
@@ -39,6 +38,7 @@
 #ifndef _WIN32
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <unistd.h>
 #endif
 
 
